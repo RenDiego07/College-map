@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa Interactivo con Menú</title>
+    
+    <!-- Estilos de Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        /* Diseño general: Flexbox para dividir mapa (arriba) y menú (abajo) */
+        body, html { 
+            margin: 0; 
+            padding: 0; 
+            height: 100%; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+        }
+
+        /* El mapa toma todo el espacio disponible sobrante */
+        #mi-mapa { 
+            flex: 1; 
+            width: 100%; 
+            z-index: 1; /* Para que no se sobreponga al menú */
+        }
+
+        /* Estilos del contenedor del menú inferior */
+        #menu-inferior {
+            height: 30vh; /* Ocupa el 30% de la pantalla */
+            background-color: white;
+            overflow-y: auto; /* Permite hacer scroll si hay muchos lugares */
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        /* Estilos de la lista y los ítems */
+        .lugar-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            transition: background 0.2s;
+        }
+
+        .lugar-item:hover {
+            background-color: #f9f9f9;
+        }
+
+        .lugar-info h3 {
+            margin: 0 0 5px 0;
+            color: #333;
+        }
+
+        .lugar-info p {
+            margin: 0;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        /* Estilos del botón con ícono */
+        .btn-ir {
+            background-color: #0078A8;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background 0.2s;
+        }
+
+        .btn-ir:hover {
+            background-color: #005b80;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. Contenedor del Mapa -->
+    <div id="mi-mapa"></div>
+
+    <!-- 2. Contenedor del Menú Inferior -->
+    <div id="menu-inferior">
+        <div id="lista-lugares">
+            <!-- Aquí se insertarán los lugares dinámicamente con JavaScript -->
+        </div>
+    </div>
+
+    <!-- Librería Leaflet -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        // Inicializar el mapa
+        const mapa = L.map('mi-mapa').setView([-2.1460, -79.9650], 16);
+
+        // Cargar mapa base
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(mapa);
+
+        // Base de datos de lugares
+        // Base de datos de facultades ESPOL (Campus Gustavo Galindo)
+        const lugares = [
+            {
+                nombre: "Estación de buses",
+                lat: -2.1442635267096355,
+                lng: -79.96568978977587,
+                descripcion: "Estación de transporte público." 
+            },
+            { 
+                nombre: "Parada Gimnasio Bienestar", 
+                lat: -2.1436773286435367, 
+                lng: -79.96781619764165, 
+                descripcion: "Parada de interno." 
+            },
+            { 
+                nombre: "Paradero FSCH", 
+                lat: -2.147474886098651, 
+                lng: -79.96814341867588, 
+                descripcion: "Parada de interno." 
+            },
+            { 
+                nombre: "Paradero Biblioteca", 
+                lat: -2.1486696425003378, 
+                lng: -79.9648544974793, 
+                descripcion: "Parada de interno." 
+            },
+            {
+                nombre: "Paradero FCV",
+                lat: -2.1515425952864815, 
+                lng: -79.95766035606196,
+                descripcion: "Parada de interno."
+            },
+            {
+                nombre: "Paradero garita",
+                lat: -2.151986473334339, 
+                lng: -79.95271304123973,
+                descripcion: "Parada de interno."
+            },
+            { 
+                nombre: "FADCOM", 
+                lat: -2.1478, 
+                lng: -79.9655, 
+                descripcion: "Facultad de Arte, Diseño y Comunicación Audiovisual." 
+            }
+        ];
+        // Referencia al contenedor HTML donde irán los botones
+        const contenedorLista = document.getElementById('lista-lugares');
+        
+        // Array para guardar la referencia de los marcadores y poder abrirlos luego
+        const marcadoresGuardados = [];
+
+        // Generar marcadores y menú
+        lugares.forEach((lugar, indice) => {
+            
+            // 1. Crear el marcador en el mapa
+            const marcador = L.marker([lugar.lat, lugar.lng]).addTo(mapa);
+            marcador.bindPopup(`<strong>${lugar.nombre}</strong><br>${lugar.descripcion}`);
+            
+            // Guardamos el marcador en nuestro array
+            marcadoresGuardados.push(marcador);
+
+            // 2. Crear el elemento HTML para el menú inferior
+            const divLugar = document.createElement('div');
+            divLugar.className = 'lugar-item';
+            
+            // Insertamos el texto y el botón (usamos el emoji 📍 como ícono)
+            divLugar.innerHTML = `
+                <div class="lugar-info">
+                    <h3>${lugar.nombre}</h3>
+                    <p>${lugar.descripcion}</p>
+                </div>
+                <button class="btn-ir" onclick="volarHacia(${indice})">
+                    📍 Ir ahí
+                </button>
+            `;
+            
+            // Añadimos el nuevo elemento a la lista visible
+            contenedorLista.appendChild(divLugar);
+        });
+
+        // Función que se ejecuta al hacer clic en el botón "Ir ahí"
+        function volarHacia(indice) {
+            const lugarSeleccionado = lugares[indice];
+            const marcadorSeleccionado = marcadoresGuardados[indice];
+
+            // Animación de vuelo hacia las coordenadas (nivel de zoom 16 para acercarse)
+            mapa.flyTo([lugarSeleccionado.lat, lugarSeleccionado.lng], 16, {
+                duration: 1.5 // duración de la animación en segundos
+            });
+
+            // Abrir automáticamente el globito (popup) de información del marcador
+            // Usamos un pequeño retraso para que se abra cuando termine de volar
+            setTimeout(() => {
+                marcadorSeleccionado.openPopup();
+            }, 1500); 
+        }
+    </script>
+</body>
+</html>

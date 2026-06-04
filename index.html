@@ -8,91 +8,88 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <style>
-        /* Diseño general: Flexbox para dividir mapa (arriba) y menú (abajo) */
         body, html { 
-            margin: 0; 
-            padding: 0; 
-            height: 100%; 
+            margin: 0; padding: 0; height: 100%; 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            display: flex; 
-            flex-direction: column; 
+            display: flex; flex-direction: column; 
         }
 
-        /* El mapa toma todo el espacio disponible sobrante */
-        #mi-mapa { 
-            flex: 1; 
-            width: 100%; 
-            z-index: 1; 
-        }
+        #mi-mapa { flex: 1; width: 100%; z-index: 1; }
 
-        /* Estilos del contenedor del menú inferior */
         #menu-inferior {
-            height: 35vh; /* Lo amplié un poquito al 35% para que se vean mejor las 2 listas */
+            height: 40vh; 
             background-color: white;
-            overflow-y: auto; 
+            display: flex;
+            flex-direction: column;
             box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
             z-index: 10;
         }
 
-        /* Estilos para los títulos de cada sección */
-        .titulo-seccion {
-            background-color: #e6f2f7; /* Un azul muy clarito de fondo */
-            color: #0078A8;
-            margin: 0;
-            padding: 10px 20px;
-            font-size: 1.1em;
-            border-bottom: 2px solid #cce4ee;
-            position: sticky; /* Hace que el título se quede fijo al hacer scroll */
-            top: 0;
-            z-index: 5;
-        }
-
-        /* Estilos de la lista y los ítems */
-        .lugar-item {
+        /* --- Estilos para el Segmented Button (Tabs) --- */
+        .segment-container {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            border-bottom: 1px solid #eee;
-            transition: background 0.2s;
-        }
-
-        .lugar-item:hover {
-            background-color: #f9f9f9;
-        }
-
-        .lugar-info h3 {
-            margin: 0 0 5px 0;
-            color: #333;
-            font-size: 1.1em;
-        }
-
-        .lugar-info p {
-            margin: 0;
-            color: #666;
-            font-size: 0.85em;
-        }
-
-        /* Estilos del botón con ícono */
-        .btn-ir {
-            background-color: #0078A8;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            transition: background 0.2s;
-            min-width: 90px;
+            background-color: #f1f1f1;
+            padding: 10px;
             justify-content: center;
         }
 
-        .btn-ir:hover {
-            background-color: #005b80;
+        .segment-btn {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            background-color: #e0e0e0;
+            color: #555;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1em;
+            transition: 0.3s;
         }
+
+        .segment-btn:first-child { border-radius: 8px 0 0 8px; }
+        .segment-btn:last-child { border-radius: 0 8px 8px 0; }
+
+        .segment-btn.active {
+            background-color: #0078A8;
+            color: white;
+        }
+
+        /* --- Paneles ocultos/visibles --- */
+        .panel {
+            display: none; /* Ocultos por defecto */
+            overflow-y: auto;
+            flex: 1;
+        }
+        .panel.active {
+            display: block; /* Se muestra el activo */
+        }
+
+        .titulo-seccion {
+            background-color: #e6f2f7; color: #0078A8;
+            margin: 0; padding: 10px 20px; font-size: 1.1em;
+            border-bottom: 2px solid #cce4ee; position: sticky; top: 0; z-index: 5;
+        }
+
+        .item-lista {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 20px; border-bottom: 1px solid #eee; transition: background 0.2s;
+        }
+        .item-lista:hover { background-color: #f9f9f9; }
+        .item-info h3 { margin: 0 0 5px 0; color: #333; font-size: 1.1em; }
+        .item-info p { margin: 0; color: #666; font-size: 0.85em; }
+
+        .btn-accion {
+            background-color: #0078A8; color: white; border: none;
+            padding: 10px 15px; border-radius: 6px; cursor: pointer;
+            font-weight: bold; transition: background 0.2s; min-width: 90px;
+        }
+        .btn-accion:hover { background-color: #005b80; }
+        
+        .btn-ruta {
+            background-color: #28a745;
+        }
+        .btn-ruta:hover { background-color: #218838; }
+
     </style>
 </head>
 <body>
@@ -101,102 +98,236 @@
 
     <div id="menu-inferior">
         
-        <h2 class="titulo-seccion">🚍 Punto de Ida</h2>
-        <div id="lista-ida"></div>
-        
-        <h2 class="titulo-seccion">🚌 Punto de Retorno</h2>
-        <div id="lista-vuelta"></div>
+        <div class="segment-container">
+            <button class="segment-btn active" id="btn-paradas" onclick="cambiarTab('paradas')">📍 Paradas</button>
+            <button class="segment-btn" id="btn-rutas" onclick="cambiarTab('rutas')">🛣️ Rutas</button>
+        </div>
+
+        <div id="panel-paradas" class="panel active">
+            <h2 class="titulo-seccion">🚍 Puntos de Entrada</h2>
+            <div id="lista-entrada"></div>
+            
+            <h2 class="titulo-seccion">🚌 Puntos de Salida</h2>
+            <div id="lista-salida"></div>
+        </div>
+
+        <div id="panel-rutas" class="panel">
+            <h2 class="titulo-seccion">➡️ Rutas de Entrada</h2>
+            <div id="lista-rutas-entrada"></div>
+
+            <h2 class="titulo-seccion">⬅️ Rutas de Salida</h2>
+            <div id="lista-rutas-salida"></div>
+        </div>
 
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
     <script>
-        // Inicializar el mapa centrado en ESPOL
+        // Inicializar mapa
         const mapa = L.map('mi-mapa').setView([-2.1460, -79.9650], 15);
-
-        // Cargar mapa base
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
         }).addTo(mapa);
 
-        // --- ARREGLO 1: RUTAS DE IDA ---
-        const rutasIda = [
-            { nombre: "Estación de buses", lat: -2.1442635267096355, lng: -79.96568978977587, descripcion: "Estación de transporte público." },
-            { nombre: "Parada Gimnasio Bienestar", lat: -2.1436773286435367, lng: -79.96781619764165, descripcion: "Parada de interno." },
-            { nombre: "Paradero FCSH", lat: -2.147474886098651, lng: -79.96814341867588, descripcion: "Parada de interno." },
-            { nombre: "Paradero Biblioteca", lat: -2.1486696425003378, lng: -79.9648544974793, descripcion: "Parada de interno." },
-            { nombre: "Paradero FCV", lat: -2.1515425952864815, lng: -79.95766035606196, descripcion: "Parada de interno." },
-            { nombre: "Paradero Garita", lat: -2.151986473334339, lng: -79.95271304123973, descripcion: "Parada de interno." },
-            { nombre: "Centro de Tecnología en Información", lat: -2.1458152284082095, lng: -79.94835659268176, descripcion: "Parada de interno." },
-            { nombre: "Paradero FADCOM", lat: -2.1443139419464257, lng: -79.96229688573032, descripcion: "Parada de interno." }
+        // --- DICCIONARIO DE COORDENADAS BASE ---
+        const coords = {
+            garita: [-2.151986473334339, -79.95271304123973],
+            fcv: [-2.1515425952864815, -79.95766035606196],
+            biblioteca: [-2.1486774630588266, -79.96448365785928],
+            fcsh: [-2.147474886098651, -79.96814341867588],
+            fiec: [-2.14450208655603, -79.96804660776182],
+            estacion: [-2.1442635267096355, -79.96568978977587],
+            fadcom: [-2.1443139419464257, -79.96229688573032],
+            gimnasio: [-2.1436773286435367, -79.96781619764165],
+            CTI: [-2.1459170262655074, -79.94856423348098],
+
+            gimnasioSalida: [-2.1436773286435367, -79.96781619764165],
+            fcshSalida: [-2.147523111466108, -79.96835718370146],
+            bibliotecaSalida: [-2.1486696425003378, -79.9648544974793],
+            piscinaSalida: [-2.1517444031666835, -79.95789539782366],
+            garitaSalida: [-2.1524057475753575, -79.9531264523259]
+        };
+
+        // --- ARREGLO DE PARADAS (Para el Panel 1) ---
+        // Renombrado a paradasEntrada para evitar conflictos
+        const paradasEntrada = [
+            { nombre: "Paradero CTI", lat: coords.CTI[0], lng: coords.CTI[1], descripcion: "Punto de entrada." }, // <-- CTI Agregado aquí
+            { nombre: "Paradero Garita", lat: coords.garita[0], lng: coords.garita[1], descripcion: "Parada de interno." },
+            { nombre: "Paradero FCV", lat: coords.fcv[0], lng: coords.fcv[1], descripcion: "Parada de interno." },
+            { nombre: "Paradero Biblioteca", lat: coords.biblioteca[0], lng: coords.biblioteca[1], descripcion: "Parada de interno." },
+            { nombre: "Paradero FCSH", lat: coords.fcsh[0], lng: coords.fcsh[1], descripcion: "Parada de interno." },
+            { nombre: "Paradero FIEC", lat: coords.fiec[0], lng: coords.fiec[1], descripcion: "Parada de interno." },
+            { nombre: "Estación de buses", lat: coords.estacion[0], lng: coords.estacion[1], descripcion: "Estación central." },
+            { nombre: "Paradero FADCOM", lat: coords.fadcom[0], lng: coords.fadcom[1], descripcion: "Parada de interno." }
         ];
 
-        // --- ARREGLO 2: RUTAS DE RETORNO ---
-        const rutasVuelta = [
-            { nombre: "Paradero Biblioteca", lat: -2.1486774630588266, lng: -79.96448365785928, descripcion: "Parada de interno." },
-            { nombre: "Paradero FCV/Piscina", lat: -2.1517444031666835, lng: -79.95789539782366, descripcion: "Parada de interno." },
-            { nombre: "Paradero FCSH", lat: -2.147523111466108, lng: -79.96835718370146, descripcion: "Parada de interno." },
-            { nombre: "Paradero FIEC", lat: -2.14450208655603, lng: -79.96804660776182, descripcion: "Parada de interno." },
-            { nombre: "Paradero Garita", lat: -2.1524057475753575, lng: -79.9531264523259, descripcion: "Parada de interno." }
+        // Renombrado a paradasSalida
+        const paradasSalida = [
+            { nombre: "Paradero FADCOM", lat: coords.fadcom[0], lng: coords.fadcom[1], descripcion: "Inicio de ruta de salida." },
+            { nombre: "Estación de buses", lat: coords.estacion[0], lng: coords.estacion[1], descripcion: "Parada de interno." },
+            { nombre: "Parada Gimnasio Bienestar", lat: coords.gimnasioSalida[0], lng: coords.gimnasioSalida[1], descripcion: "Parada de interno." },
+            { nombre: "Paradero FCSH", lat: coords.fcshSalida[0], lng: coords.fcshSalida[1], descripcion: "Parada de interno." },
+            { nombre: "Paradero Biblioteca", lat: coords.bibliotecaSalida[0], lng: coords.bibliotecaSalida[1], descripcion: "Parada de interno." },
+            { nombre: "Paradero FCV / Piscina", lat: coords.piscinaSalida[0], lng: coords.piscinaSalida[1], descripcion: "Parada de interno." },
+            { nombre: "Paradero Garita", lat: coords.garitaSalida[0], lng: coords.garitaSalida[1], descripcion: "Punto final de salida." }
         ];
 
-        // Unimos los dos arreglos solo para poder saber el lugar seleccionado al hacer clic
-        const lugaresGlobales = [...rutasIda, ...rutasVuelta];
+        // --- ARREGLO DE RUTAS (Para el Panel 2) ---
+        const rutasEntrada = [
+            {
+                nombre: "Ruta 0",
+                descripcion: "De CTI a FADCOM (7 paradas)",
+                camino: [coords.CTI, coords.garita, coords.fcv, coords.biblioteca, coords.fcsh, coords.fiec, coords.estacion, coords.fadcom]
+            },
+            {
+                nombre: "Ruta 1",
+                descripcion: "De Garita a FADCOM (6 paradas)",
+                camino: [coords.garita, coords.fcv, coords.biblioteca, coords.fcsh, coords.fiec, coords.estacion, coords.fadcom]
+            },
+            {
+                nombre: "Ruta 2",
+                descripcion: "De FCV a FADCOM (5 paradas)",
+                camino: [coords.fcv, coords.biblioteca, coords.fcsh, coords.fiec, coords.estacion, coords.fadcom]
+            },
+            {
+                nombre: "Ruta 3",
+                descripcion: "De Biblioteca a FADCOM (4 paradas)",
+                camino: [coords.biblioteca, coords.fcsh, coords.fiec, coords.estacion, coords.fadcom]
+            },
+            {
+                nombre: "Ruta 4",
+                descripcion: "De FCSH a FADCOM (3 paradas)",
+                camino: [coords.fcsh, coords.fiec, coords.estacion, coords.fadcom]
+            },
+            {
+                nombre: "Ruta 5",
+                descripcion: "De FIEC a FADCOM (2 paradas)",
+                camino: [coords.fiec, coords.estacion, coords.fadcom]
+            },
+            {
+                nombre: "Ruta 6",
+                descripcion: "De Estación a FADCOM (1 parada)",
+                camino: [coords.estacion, coords.fadcom]
+            }
+        ];
+
+        const rutasSalida = [
+            {
+                nombre: "Ruta Salida 1",
+                descripcion: "De Fadcom a Garita (6 paradas)",
+                camino: [coords.fadcom, coords.estacion, coords.fiec, coords.fcsh, coords.biblioteca, coords.fcv, coords.garita]
+            },
+            {
+                nombre: "Ruta Salida 2",
+                descripcion: "De Estación de buses a FCV (5 paradas)",
+                camino: [coords.estacion, coords.fiec, coords.fcsh, coords.biblioteca, coords.fcv, coords.garita]
+            },
+            {
+                nombre: "Ruta Salida 3",
+                descripcion: "De Fadcom a garita (4 paradas)",
+                camino: [coords.fiec, coords.fcsh, coords.biblioteca, coords.fcv, coords.garita]
+            },
+            {
+                nombre: "Ruta Salida 4",
+                descripcion: "De FCSH a garita (3 paradas)",
+                camino: [coords.fcsh, coords.biblioteca, coords.fcv, coords.garita]
+            },
+            {
+                nombre: "Ruta Salida 5",
+                descripcion: "De Biblioteca a garita (2 paradas)",
+                camino: [coords.biblioteca, coords.fcv, coords.garita]
+            },
+            {
+                nombre: "Ruta Salida 6",
+                descripcion: "De FCV a garita (1 parada)",
+                camino: [coords.fcv, coords.garita]
+            }
+        ];
+
+        // --- LÓGICA DE LA INTERFAZ ---
+
+        // 1. Lógica para cambiar de pestaña (Tabs)
+        function cambiarTab(tab) {
+            document.getElementById('panel-paradas').classList.remove('active');
+            document.getElementById('panel-rutas').classList.remove('active');
+            document.getElementById('btn-paradas').classList.remove('active');
+            document.getElementById('btn-rutas').classList.remove('active');
+
+            document.getElementById(`panel-${tab}`).classList.add('active');
+            document.getElementById(`btn-${tab}`).classList.add('active');
+        }
+
+        // 2. Renderizar Puntos del Panel "Paradas"
+        const lugaresGlobales = [...paradasEntrada, ...paradasSalida];
         const marcadoresGuardados = [];
 
-        // Función para renderizar los menús y marcadores automáticamente
-        // "offset" nos ayuda a saber qué número de índice global tiene cada botón
-        function generarMenuYMarcadores(listaLugares, idContenedorHTML, offsetIndices) {
+        function generarParadas(listaLugares, idContenedorHTML, offsetIndices) {
             const contenedor = document.getElementById(idContenedorHTML);
-
             listaLugares.forEach((lugar, indiceLocal) => {
-                const indiceGlobal = offsetIndices + indiceLocal; // Para que la función volarHacia sepa cuál elegir
-
-                // 1. Crear el marcador en el mapa
+                const indiceGlobal = offsetIndices + indiceLocal; 
+                
                 const marcador = L.marker([lugar.lat, lugar.lng]).addTo(mapa);
                 marcador.bindPopup(`<strong>${lugar.nombre}</strong><br>${lugar.descripcion}`);
                 marcadoresGuardados.push(marcador);
 
-                // 2. Crear el elemento HTML en la lista
-                const divLugar = document.createElement('div');
-                divLugar.className = 'lugar-item';
-                
-                divLugar.innerHTML = `
-                    <div class="lugar-info">
-                        <h3>${lugar.nombre}</h3>
-                        <p>${lugar.descripcion}</p>
+                contenedor.innerHTML += `
+                    <div class="item-lista">
+                        <div class="item-info">
+                            <h3>${lugar.nombre}</h3>
+                            <p>${lugar.descripcion}</p>
+                        </div>
+                        <button class="btn-accion" onclick="volarHacia(${indiceGlobal})">📍 Ir ahí</button>
                     </div>
-                    <button class="btn-ir" onclick="volarHacia(${indiceGlobal})">
-                        📍 Ir ahí
-                    </button>
                 `;
-                
-                contenedor.appendChild(divLugar);
             });
         }
 
-        // Ejecutamos la función para generar ambas listas
-        // Para "Ida" empezamos a contar desde 0
-        generarMenuYMarcadores(rutasIda, 'lista-ida', 0);
-        
-        // Para "Retorno" empezamos a contar desde donde terminó la lista de Ida
-        generarMenuYMarcadores(rutasVuelta, 'lista-vuelta', rutasIda.length);
+        // Usamos las variables renombradas
+        generarParadas(paradasEntrada, 'lista-entrada', 0);
+        generarParadas(paradasSalida, 'lista-salida', paradasEntrada.length);
 
-        // Función que se ejecuta al hacer clic en el botón "Ir ahí"
         function volarHacia(indiceGlobal) {
-            const lugarSeleccionado = lugaresGlobales[indiceGlobal];
-            const marcadorSeleccionado = marcadoresGuardados[indiceGlobal];
+            const lugar = lugaresGlobales[indiceGlobal];
+            mapa.flyTo([lugar.lat, lugar.lng], 17, { duration: 1.5 });
+            setTimeout(() => { marcadoresGuardados[indiceGlobal].openPopup(); }, 1500); 
+        }
 
-            // Vuelo hacia las coordenadas
-            mapa.flyTo([lugarSeleccionado.lat, lugarSeleccionado.lng], 17, {
-                duration: 1.5
+        // 3. Renderizar y Pintar Líneas del Panel "Rutas"
+        let lineaTrazadaActual = null; 
+
+        function generarRutas(listaRutas, idContenedorHTML) {
+            const contenedor = document.getElementById(idContenedorHTML);
+            listaRutas.forEach((ruta, indice) => {
+                const caminoString = JSON.stringify(ruta.camino);
+
+                contenedor.innerHTML += `
+                    <div class="item-lista">
+                        <div class="item-info">
+                            <h3>${ruta.nombre}</h3>
+                            <p>${ruta.descripcion}</p>
+                        </div>
+                        <button class="btn-accion btn-ruta" onclick='dibujarLineaEnMapa(${caminoString})'>🛣️ Ver Ruta</button>
+                    </div>
+                `;
             });
+        }
 
-            // Abrir popup
-            setTimeout(() => {
-                marcadorSeleccionado.openPopup();
-            }, 1500); 
+        generarRutas(rutasEntrada, 'lista-rutas-entrada');
+        generarRutas(rutasSalida, 'lista-rutas-salida');
+
+        function dibujarLineaEnMapa(arregloCoordenadas) {
+            if (lineaTrazadaActual !== null) {
+                mapa.removeLayer(lineaTrazadaActual);
+            }
+
+            lineaTrazadaActual = L.polyline(arregloCoordenadas, {
+                color: '#E03C31', 
+                weight: 5,        
+                opacity: 0.8
+            }).addTo(mapa);
+
+            mapa.fitBounds(lineaTrazadaActual.getBounds(), { padding: [30, 30] });
         }
     </script>
 </body>

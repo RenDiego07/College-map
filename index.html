@@ -101,6 +101,8 @@
         <div class="segment-container">
             <button class="segment-btn active" id="btn-paradas" onclick="cambiarTab('paradas')">📍 Paradas</button>
             <button class="segment-btn" id="btn-rutas" onclick="cambiarTab('rutas')">🛣️ Rutas</button>
+            <!-- NUEVO BOTÓN AÑADIDO -->
+            <button class="segment-btn" id="btn-nuevas" onclick="cambiarTab('nuevas')">🆕 Nuevas Rutas</button>
         </div>
 
         <div id="panel-paradas" class="panel active">
@@ -117,6 +119,12 @@
 
             <h2 class="titulo-seccion">⬅️ Rutas de Salida</h2>
             <div id="lista-rutas-salida"></div>
+        </div>
+
+        <!-- NUEVO PANEL AÑADIDO -->
+        <div id="panel-nuevas" class="panel">
+            <h2 class="titulo-seccion">🆕 Nuevas Rutas Asignadas</h2>
+            <div id="lista-rutas-nuevas"></div>
         </div>
 
     </div>
@@ -150,9 +158,8 @@
         };
 
         // --- ARREGLO DE PARADAS (Para el Panel 1) ---
-        // Renombrado a paradasEntrada para evitar conflictos
         const paradasEntrada = [
-            { nombre: "Paradero CTI", lat: coords.CTI[0], lng: coords.CTI[1], descripcion: "Punto de entrada." }, // <-- CTI Agregado aquí
+            { nombre: "Paradero CTI", lat: coords.CTI[0], lng: coords.CTI[1], descripcion: "Punto de entrada." },
             { nombre: "Paradero Garita", lat: coords.garita[0], lng: coords.garita[1], descripcion: "Parada de interno." },
             { nombre: "Paradero FCV", lat: coords.fcv[0], lng: coords.fcv[1], descripcion: "Parada de interno." },
             { nombre: "Paradero Biblioteca", lat: coords.biblioteca[0], lng: coords.biblioteca[1], descripcion: "Parada de interno." },
@@ -162,7 +169,6 @@
             { nombre: "Paradero FADCOM", lat: coords.fadcom[0], lng: coords.fadcom[1], descripcion: "Parada de interno." }
         ];
 
-        // Renombrado a paradasSalida
         const paradasSalida = [
             { nombre: "Paradero FADCOM", lat: coords.fadcom[0], lng: coords.fadcom[1], descripcion: "Inicio de ruta de salida." },
             { nombre: "Estación de buses", lat: coords.estacion[0], lng: coords.estacion[1], descripcion: "Parada de interno." },
@@ -175,85 +181,67 @@
 
         // --- ARREGLO DE RUTAS (Para el Panel 2) ---
         const rutasEntrada = [
-            {
-                nombre: "Ruta 0",
-                descripcion: "De CTI a FADCOM (7 paradas)",
-                camino: [coords.CTI, coords.garita, coords.fcv, coords.biblioteca, coords.fcsh, coords.fiec, coords.estacion, coords.fadcom]
-            },
-            {
-                nombre: "Ruta 1",
-                descripcion: "De Garita a FADCOM (6 paradas)",
-                camino: [coords.garita, coords.fcv, coords.biblioteca, coords.fcsh, coords.fiec, coords.estacion, coords.fadcom]
-            },
-            {
-                nombre: "Ruta 2",
-                descripcion: "De FCV a FADCOM (5 paradas)",
-                camino: [coords.fcv, coords.biblioteca, coords.fcsh, coords.fiec, coords.estacion, coords.fadcom]
-            },
-            {
-                nombre: "Ruta 3",
-                descripcion: "De Biblioteca a FADCOM (4 paradas)",
-                camino: [coords.biblioteca, coords.fcsh, coords.fiec, coords.estacion, coords.fadcom]
-            },
-            {
-                nombre: "Ruta 4",
-                descripcion: "De FCSH a FADCOM (3 paradas)",
-                camino: [coords.fcsh, coords.fiec, coords.estacion, coords.fadcom]
-            },
-            {
-                nombre: "Ruta 5",
-                descripcion: "De FIEC a FADCOM (2 paradas)",
-                camino: [coords.fiec, coords.estacion, coords.fadcom]
-            },
-            {
-                nombre: "Ruta 6",
-                descripcion: "De Estación a FADCOM (1 parada)",
-                camino: [coords.estacion, coords.fadcom]
-            }
+            { nombre: "Ruta 0", descripcion: "De CTI a FADCOM (7 paradas)", camino: [coords.CTI, coords.garita, coords.fcv, coords.biblioteca, coords.fcsh, coords.fiec, coords.estacion, coords.fadcom] },
+            { nombre: "Ruta 1", descripcion: "De Garita a FADCOM (6 paradas)", camino: [coords.garita, coords.fcv, coords.biblioteca, coords.fcsh, coords.fiec, coords.estacion, coords.fadcom] },
+            { nombre: "Ruta 2", descripcion: "De FCV a FADCOM (5 paradas)", camino: [coords.fcv, coords.biblioteca, coords.fcsh, coords.fiec, coords.estacion, coords.fadcom] },
+            { nombre: "Ruta 3", descripcion: "De Biblioteca a FADCOM (4 paradas)", camino: [coords.biblioteca, coords.fcsh, coords.fiec, coords.estacion, coords.fadcom] },
+            { nombre: "Ruta 4", descripcion: "De FCSH a FADCOM (3 paradas)", camino: [coords.fcsh, coords.fiec, coords.estacion, coords.fadcom] },
+            { nombre: "Ruta 5", descripcion: "De FIEC a FADCOM (2 paradas)", camino: [coords.fiec, coords.estacion, coords.fadcom] },
+            { nombre: "Ruta 6", descripcion: "De Estación a FADCOM (1 parada)", camino: [coords.estacion, coords.fadcom] }
         ];
 
         const rutasSalida = [
+            { nombre: "Ruta Salida 1", descripcion: "De Fadcom a Garita (6 paradas)", camino: [coords.fadcom, coords.estacion, coords.fiec, coords.fcsh, coords.biblioteca, coords.fcv, coords.garita] },
+            { nombre: "Ruta Salida 2", descripcion: "De Estación de buses a FCV (5 paradas)", camino: [coords.estacion, coords.fiec, coords.fcsh, coords.biblioteca, coords.fcv, coords.garita] },
+            { nombre: "Ruta Salida 3", descripcion: "De Fadcom a garita (4 paradas)", camino: [coords.fiec, coords.fcsh, coords.biblioteca, coords.fcv, coords.garita] },
+            { nombre: "Ruta Salida 4", descripcion: "De FCSH a garita (3 paradas)", camino: [coords.fcsh, coords.biblioteca, coords.fcv, coords.garita] },
+            { nombre: "Ruta Salida 5", descripcion: "De Biblioteca a garita (2 paradas)", camino: [coords.biblioteca, coords.fcv, coords.garita] },
+            { nombre: "Ruta Salida 6", descripcion: "De FCV a garita (1 parada)", camino: [coords.fcv, coords.garita] }
+        ];
+
+        // --- ARREGLO DE NUEVAS RUTAS (Para el Panel 3) ---
+        const nuevasRutas = [
             {
-                nombre: "Ruta Salida 1",
-                descripcion: "De Fadcom a Garita (6 paradas)",
-                camino: [coords.fadcom, coords.estacion, coords.fiec, coords.fcsh, coords.biblioteca, coords.fcv, coords.garita]
+                nombre: "Ruta 1",
+                descripcion: "Garita - Terminal (FICMP)",
+                camino: [coords.garita, coords.estacion]
             },
             {
-                nombre: "Ruta Salida 2",
-                descripcion: "De Estación de buses a FCV (5 paradas)",
-                camino: [coords.estacion, coords.fiec, coords.fcsh, coords.biblioteca, coords.fcv, coords.garita]
+                nombre: "Ruta 2",
+                descripcion: "Garita - Terminal - Fadcom - Terminal",
+                camino: [coords.garita, coords.estacion, coords.fadcom, coords.estacion]
             },
             {
-                nombre: "Ruta Salida 3",
-                descripcion: "De Fadcom a garita (4 paradas)",
-                camino: [coords.fiec, coords.fcsh, coords.biblioteca, coords.fcv, coords.garita]
+                nombre: "Ruta 3",
+                descripcion: "Garita - CTI - Terminal",
+                camino: [coords.garita, coords.CTI, coords.estacion]
             },
             {
-                nombre: "Ruta Salida 4",
-                descripcion: "De FCSH a garita (3 paradas)",
-                camino: [coords.fcsh, coords.biblioteca, coords.fcv, coords.garita]
+                nombre: "Ruta 4",
+                descripcion: "Garita - Fadcom - Terminal",
+                camino: [coords.garita, coords.fadcom, coords.estacion]
             },
             {
-                nombre: "Ruta Salida 5",
-                descripcion: "De Biblioteca a garita (2 paradas)",
-                camino: [coords.biblioteca, coords.fcv, coords.garita]
-            },
-            {
-                nombre: "Ruta Salida 6",
-                descripcion: "De FCV a garita (1 parada)",
-                camino: [coords.fcv, coords.garita]
+                nombre: "Ruta 5",
+                descripcion: "Garita - CTI - FADCOM - Terminal",
+                camino: [coords.garita, coords.CTI, coords.fadcom, coords.estacion]
             }
         ];
 
         // --- LÓGICA DE LA INTERFAZ ---
 
-        // 1. Lógica para cambiar de pestaña (Tabs)
+        // 1. Lógica modificada para soportar tres pestañas
         function cambiarTab(tab) {
+            // Ocultar todos los paneles y deseleccionar botones
             document.getElementById('panel-paradas').classList.remove('active');
             document.getElementById('panel-rutas').classList.remove('active');
+            document.getElementById('panel-nuevas').classList.remove('active');
+            
             document.getElementById('btn-paradas').classList.remove('active');
             document.getElementById('btn-rutas').classList.remove('active');
+            document.getElementById('btn-nuevas').classList.remove('active');
 
+            // Mostrar el panel y botón seleccionado
             document.getElementById(`panel-${tab}`).classList.add('active');
             document.getElementById(`btn-${tab}`).classList.add('active');
         }
@@ -283,7 +271,6 @@
             });
         }
 
-        // Usamos las variables renombradas
         generarParadas(paradasEntrada, 'lista-entrada', 0);
         generarParadas(paradasSalida, 'lista-salida', paradasEntrada.length);
 
@@ -293,12 +280,12 @@
             setTimeout(() => { marcadoresGuardados[indiceGlobal].openPopup(); }, 1500); 
         }
 
-        // 3. Renderizar y Pintar Líneas del Panel "Rutas"
+        // 3. Renderizar y Pintar Líneas de los Paneles "Rutas" y "Nuevas Rutas"
         let lineaTrazadaActual = null; 
 
         function generarRutas(listaRutas, idContenedorHTML) {
             const contenedor = document.getElementById(idContenedorHTML);
-            listaRutas.forEach((ruta, indice) => {
+            listaRutas.forEach((ruta) => {
                 const caminoString = JSON.stringify(ruta.camino);
 
                 contenedor.innerHTML += `
@@ -315,6 +302,9 @@
 
         generarRutas(rutasEntrada, 'lista-rutas-entrada');
         generarRutas(rutasSalida, 'lista-rutas-salida');
+        
+        // Llamada a la función para renderizar las nuevas rutas en su respectivo contenedor
+        generarRutas(nuevasRutas, 'lista-rutas-nuevas');
 
         function dibujarLineaEnMapa(arregloCoordenadas) {
             if (lineaTrazadaActual !== null) {
